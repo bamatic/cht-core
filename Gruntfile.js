@@ -269,7 +269,7 @@ module.exports = function(grunt) {
           },
         ],
       },
-      'libraries-to-patch': {
+      'webapp-libraries-to-patch': {
         expand: true,
         cwd: 'webapp/node_modules',
         src: [
@@ -280,6 +280,14 @@ module.exports = function(grunt) {
           'moment/**'
         ],
         dest: 'webapp/node_modules_backup',
+      },
+      'cht-libraries-to-patch': {
+        expand: true,
+        cwd: 'node_modules',
+        src: [
+          'grunt-contrib-copy/**',
+        ],
+        dest: 'node_modules_backup',
       },
     },
     exec: {
@@ -466,15 +474,16 @@ module.exports = function(grunt) {
       'undo-patches': {
         cmd: function() {
           const modulesToPatch = [
-            'bootstrap-daterangepicker',
-            'enketo-core',
-            'font-awesome',
-            'moment',
-            'pouchdb-browser',
+            { project: 'webapp', module: 'bootstrap-daterangepicker' },
+            { project: 'webapp', module: 'enketo-core' },
+            { project: 'webapp', module: 'font-awesome' },
+            { project: 'webapp', module: 'moment' },
+            { project: 'webapp', module: 'pouchdb-browser' },
+            { project: '.', module: 'grunt-contrib-copy' },
           ];
-          return modulesToPatch.map(module => {
-            const backupPath = 'webapp/node_modules_backup/' + module;
-            const modulePath = 'webapp/node_modules/' + module;
+          return modulesToPatch.map(({ project, module }) => {
+            const backupPath = `${project}/node_modules_backup/${module}`;
+            const modulePath = `${project}/node_modules/${module}`;
             return `
               [ -d ${backupPath} ] &&
               rm -rf ${modulePath} &&
@@ -526,7 +535,7 @@ module.exports = function(grunt) {
       // 1. copy the file you want to change
       // 2. make the changes
       // 3. run `diff -c original modified > webapp/patches/my-patch.patch`
-      // 4. update grunt targets: "apply-patches", "undo-patches", and "libraries-to-patch"
+      // 4. update grunt targets: "apply-patches", "undo-patches", and "cht-libraries-to-patch" or "webapp-libraries-to-patch"
       'apply-patches': {
         cmd: function() {
           const patches = [
@@ -554,6 +563,9 @@ module.exports = function(grunt) {
             // patch pouchdb to catch unhandled rejections
             // https://github.com/medic/cht-core/issues/6626
             'patch webapp/node_modules/pouchdb-browser/lib/index.js < webapp/patches/pouchdb-unhandled-rejection.patch',
+
+            // patch grunt-contrib-copy to resolve symlinks when copying files
+            'patch node_modules/grunt-contrib-copy/tasks/copy.js < patches/grunt-contrib-copy-resolve-symlinks.patch',
           ];
           return patches.join(' && ');
         },
@@ -861,7 +873,8 @@ module.exports = function(grunt) {
     'exec:undo-patches',
     'exec:npm-ci-shared-libs',
     'exec:npm-ci-modules',
-    'copy:libraries-to-patch',
+    'copy:cht-libraries-to-patch',
+    'copy:webapp-libraries-to-patch',
     'exec:apply-patches',
   ]);
 
