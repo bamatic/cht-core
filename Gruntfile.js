@@ -248,7 +248,10 @@ module.exports = function(grunt) {
         cwd: 'api/src/public/',
         src: '**/*',
         dest: 'api/build/public/',
-        follow: true,
+      },
+      'api-bowser': {
+        src: 'api/node_modules/bowser/bundled.js',
+        dest: 'api/src/public/login/lib-bowser.js',
       },
       'admin-resources': {
         files: [
@@ -269,7 +272,7 @@ module.exports = function(grunt) {
           },
         ],
       },
-      'webapp-libraries-to-patch': {
+      'libraries-to-patch': {
         expand: true,
         cwd: 'webapp/node_modules',
         src: [
@@ -280,14 +283,6 @@ module.exports = function(grunt) {
           'moment/**'
         ],
         dest: 'webapp/node_modules_backup',
-      },
-      'cht-libraries-to-patch': {
-        expand: true,
-        cwd: 'node_modules',
-        src: [
-          'grunt-contrib-copy/**',
-        ],
-        dest: 'node_modules_backup',
       },
     },
     exec: {
@@ -474,16 +469,15 @@ module.exports = function(grunt) {
       'undo-patches': {
         cmd: function() {
           const modulesToPatch = [
-            { project: 'webapp', module: 'bootstrap-daterangepicker' },
-            { project: 'webapp', module: 'enketo-core' },
-            { project: 'webapp', module: 'font-awesome' },
-            { project: 'webapp', module: 'moment' },
-            { project: 'webapp', module: 'pouchdb-browser' },
-            { project: '.', module: 'grunt-contrib-copy' },
+            'bootstrap-daterangepicker',
+            'enketo-core',
+            'font-awesome',
+            'moment',
+            'pouchdb-browser',
           ];
-          return modulesToPatch.map(({ project, module }) => {
-            const backupPath = `${project}/node_modules_backup/${module}`;
-            const modulePath = `${project}/node_modules/${module}`;
+          return modulesToPatch.map(module => {
+            const backupPath = `webapp/node_modules_backup/${module}`;
+            const modulePath = `webapp/node_modules/${module}`;
             return `
               [ -d ${backupPath} ] &&
               rm -rf ${modulePath} &&
@@ -535,7 +529,7 @@ module.exports = function(grunt) {
       // 1. copy the file you want to change
       // 2. make the changes
       // 3. run `diff -c original modified > webapp/patches/my-patch.patch`
-      // 4. update grunt targets: "apply-patches", "undo-patches", and "cht-libraries-to-patch" or "webapp-libraries-to-patch"
+      // 4. update grunt targets: "apply-patches", "undo-patches", and "libraries-to-patch"
       'apply-patches': {
         cmd: function() {
           const patches = [
@@ -563,9 +557,6 @@ module.exports = function(grunt) {
             // patch pouchdb to catch unhandled rejections
             // https://github.com/medic/cht-core/issues/6626
             'patch webapp/node_modules/pouchdb-browser/lib/index.js < webapp/patches/pouchdb-unhandled-rejection.patch',
-
-            // patch grunt-contrib-copy to resolve symlinks when copying files
-            'patch node_modules/grunt-contrib-copy/tasks/copy.js < patches/grunt-contrib-copy-resolve-symlinks.patch',
           ];
           return patches.join(' && ');
         },
@@ -873,8 +864,7 @@ module.exports = function(grunt) {
     'exec:undo-patches',
     'exec:npm-ci-shared-libs',
     'exec:npm-ci-modules',
-    'copy:cht-libraries-to-patch',
-    'copy:webapp-libraries-to-patch',
+    'copy:libraries-to-patch',
     'exec:apply-patches',
   ]);
 
@@ -899,6 +889,7 @@ module.exports = function(grunt) {
     'exec:clean-build-dir',
     'copy:ddocs',
     'copy:api-resources',
+    'copy:api-bowser',
     'build-common',
     'couch-compile:primary',
   ]);
@@ -932,6 +923,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('build-node-modules', 'Build and pack api and sentinel bundles', [
     'copy:api-resources',
+    'copy:api-bowser',
     'uglify:api',
     'cssmin:api',
     'exec:bundle-dependencies',
@@ -1125,6 +1117,7 @@ module.exports = function(grunt) {
   ]);
 
   grunt.registerTask('dev-api', 'Run api and watch for file changes', [
+    'copy:api-bowser',
     'exec:api-dev',
   ]);
 
