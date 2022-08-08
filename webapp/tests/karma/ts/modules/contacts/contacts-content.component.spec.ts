@@ -528,7 +528,8 @@ describe('Contacts content component', () => {
       expect(xmlFormsService.subscribe.args[1][1]).to.deep.equal({
         contactForms: false,
         contactSummary: 'test',
-        doc: { _id: 'district-123', phone: '123', muted: true }
+        doc: { _id: 'district-123', phone: '123', muted: true },
+        whitelistedIds: [],
       });
 
       xmlFormsService.subscribe.args[1][2](null, forms);
@@ -588,7 +589,8 @@ describe('Contacts content component', () => {
       expect(xmlFormsService.subscribe.args[1][1]).to.deep.equal({
         contactForms: false,
         contactSummary: 'test',
-        doc: { _id: 'district-123', phone: '123' }
+        doc: { _id: 'district-123', phone: '123' },
+        whitelistedIds: [],
       });
 
       xmlFormsService.subscribe.args[1][2](null, forms);

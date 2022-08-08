@@ -166,7 +166,7 @@ export class XmlFormsService {
   }
 
   private filter(form, options, user) {
-    if (typeof options.whitelistedIds !== 'undefined') {
+    if (options.whitelistedIds?.length > 0) {
       if (options.whitelistedIds.includes(form.internalId)) {
         return true;
       }
