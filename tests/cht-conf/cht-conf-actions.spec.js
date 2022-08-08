@@ -75,6 +75,7 @@ describe('cht-conf actions tests', () => {
       'contact:health_center:edit.xml',
       'contact:person:create.xml',
       'contact:person:edit.xml',
+      'contact:person:replace.xml',
       'death_report.xml',
       'delivery.xml',
       'pnc_danger_sign_follow_up_baby.xml',
